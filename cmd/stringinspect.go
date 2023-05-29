@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/spf13/cobra"
 )
@@ -15,9 +14,33 @@ var stringinspectCmd = &cobra.Command{
 	Use:   "stringinspect",
 	Short: "Inspect a string",
 	Long:  `Inspect a string for learning Golang`,
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("stringinspect called")
-		MainHandle()
+
+		i := args[0]
+
+		//fmt.Println(i)
+
+		res, kind := Inspect(i, false)
+
+		//fmt.Println(res)
+		//fmt.Println(kind)
+
+		// Add variable to make output plural
+		pluralS := "s"
+
+		// If there only one character - no plural
+		if res == 1 {
+			pluralS = ""
+			fmt.Printf("'%s' has %d %s%s.\n", i, res, kind, pluralS)
+		} else if res > 1 {
+			// If there is more than one character - make plural
+			fmt.Printf("'%s' has %d %s%s.\n", i, res, kind, pluralS)
+		} else {
+			// If there are no characters - change message
+			fmt.Printf("There is %s.\n", kind)
+		}
+
 	},
 }
 
@@ -50,18 +73,30 @@ func Reverse(input string) (result string) {
 }
 
 func Inspect(input string, digits bool) (count int, kind string) {
+
+	// Input is false be default, so this function will always run
 	if !digits {
-		return len(input), "char"
+		// Added Error Handling
+		if len(input) == 0 {
+			return len(input), "no hedgehog"
+		}
 	}
-	return inspectNumbers(input), "digit"
+
+	// Returns length of input and aribtrary string
+	return len(input), "hedgehog"
+	//inspectNumbers(input)
+
+	//return inspectNumbers(input), "digit"
 }
 
 func inspectNumbers(input string) (count int) {
-	for _, c := range input {
-		_, err := strconv.Atoi(string(c))
-		if err == nil {
-			count++
-		}
-	}
+	println("This is the input: ", input)
+	count = 123451234
+	//for _, c := range input {
+	//	_, err := strconv.Atoi(string(c))
+	//	if err == nil {
+	//		count++
+	//	}
+	//}
 	return count
 }
