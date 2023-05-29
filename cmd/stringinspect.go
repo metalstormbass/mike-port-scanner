@@ -5,9 +5,14 @@ package cmd
 
 import (
 	"fmt"
+	"strconv"
 
+	"github.com/enescakir/emoji"
 	"github.com/spf13/cobra"
 )
+
+// define onlyDigits var for -d flag
+var onlyDigits bool
 
 // stringinspectCmd represents the stringinspect command
 var stringinspectCmd = &cobra.Command{
@@ -21,30 +26,45 @@ var stringinspectCmd = &cobra.Command{
 
 		//fmt.Println(i)
 
-		res, kind := Inspect(i, false)
+		res, kind := Inspect(i, onlyDigits)
 
-		//fmt.Println(res)
-		//fmt.Println(kind)
+		// Configure Emoji
+		emojiValue := "Hedgehog"
+		if onlyDigits == true {
+			emojiValue = "Bat"
+		}
 
-		// Add variable to make output plural
+		// Add variable to make output pluralß
 		pluralS := "s"
 
 		// If there only one character - no plural
 		if res == 1 {
 			pluralS = ""
-			fmt.Printf("'%s' has %d %s%s.\n", i, res, kind, pluralS)
+			if emojiValue == "Hedgehog" {
+				fmt.Printf("'%s' has %d %s%s %v\n", i, res, kind, pluralS, emoji.Hedgehog)
+			} else if emojiValue == "Bat" {
+				fmt.Printf("'%s' has %d %s%s %[5]s\n", i, res, kind, pluralS, emoji.Bat)
+			}
+
 		} else if res > 1 {
 			// If there is more than one character - make plural
-			fmt.Printf("'%s' has %d %s%s.\n", i, res, kind, pluralS)
+			if emojiValue == "Hedgehog" {
+				fmt.Printf("'%s' has %d %s%s %[5]s\n", i, res, kind, pluralS, emoji.Hedgehog)
+			} else if emojiValue == "Bat" {
+				fmt.Printf("'%s' has %d %s%s %[5]s\n", i, res, kind, pluralS, emoji.Bat)
+			}
+
 		} else {
 			// If there are no characters - change message
-			fmt.Printf("There is %s.\n", kind)
+			fmt.Printf("%[2]v There is %[1]s %[2]v\n", kind, emoji.CrossMark)
 		}
 
 	},
 }
 
 func init() {
+	// Added flag
+	stringinspectCmd.Flags().BoolVarP(&onlyDigits, "digits", "d", false, "Count only digits")
 	rootCmd.AddCommand(stringinspectCmd)
 
 	// Here you will define your flags and configuration settings.
@@ -79,24 +99,22 @@ func Inspect(input string, digits bool) (count int, kind string) {
 		// Added Error Handling
 		if len(input) == 0 {
 			return len(input), "no hedgehog"
+		} else if len(input) >= 1 {
+			return len(input), "hedgehog"
 		}
 	}
 
-	// Returns length of input and aribtrary string
-	return len(input), "hedgehog"
-	//inspectNumbers(input)
-
-	//return inspectNumbers(input), "digit"
+	// Is in use when the digit flag is added
+	return inspectNumbers(input), "bat"
 }
 
 func inspectNumbers(input string) (count int) {
-	println("This is the input: ", input)
-	count = 123451234
-	//for _, c := range input {
-	//	_, err := strconv.Atoi(string(c))
-	//	if err == nil {
-	//		count++
-	//	}
-	//}
+	for _, c := range input {
+		_, err := strconv.Atoi(string(c))
+		if err == nil {
+			count++
+		}
+	}
+
 	return count
 }
