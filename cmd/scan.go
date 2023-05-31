@@ -4,14 +4,19 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"net/netip"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/enescakir/emoji"
+	"github.com/go-ping/ping"
 	"github.com/spf13/cobra"
 )
 
@@ -28,13 +33,49 @@ var scanCmd = &cobra.Command{
 		networkInput := args[0]
 
 		// Validate and Parse Input
-		ipAddress, netmask, networkAddress := ParseNetwork(networkInput)
+		_, _, networkRange := ParseNetwork(networkInput)
 
-		fmt.Println(ipAddress, netmask, networkAddress)
+		//fmt.Println(ipAddress, netmask)
 
-		//Scan()
+		// Checking if IP Address is Alive
+		// Multi Threading
+		var wg sync.WaitGroup
 
-		//FormatOutput()
+		var aliveAddresses []string
+		networkRangeLength := len(networkRange)
+		wg.Add(networkRangeLength)
+
+		for x := range networkRange {
+			//multithread
+			go func(x int) {
+				//convert to string
+				ipTest := networkRange[x].String()
+				isAlive := isAlive(ipTest)
+				defer wg.Done()
+				if isAlive {
+					aliveAddresses = append(aliveAddresses, ipTest)
+				}
+			}(x)
+		}
+		wg.Wait()
+
+		//Sort IP Addresses
+		sortedAliveAddresses := make([]net.IP, 0, len(aliveAddresses))
+
+		for _, ip := range aliveAddresses {
+			sortedAliveAddresses = append(sortedAliveAddresses, net.ParseIP(ip))
+		}
+
+		sort.Slice(sortedAliveAddresses, func(i, j int) bool {
+			return bytes.Compare(sortedAliveAddresses[i], sortedAliveAddresses[j]) < 0
+		})
+
+		var sortedAliveAddressesStrings []string
+		for _, ip := range sortedAliveAddresses {
+			sortedAliveAddressesStrings = append(sortedAliveAddressesStrings, ip.String())
+		}
+
+		FormatOutput(sortedAliveAddressesStrings)
 
 	},
 }
@@ -90,7 +131,7 @@ func ParseNetwork(networkInput string) (ipAddress string, netmask string, networ
 	netAdd := derefIP.String()
 	netAdd = strings.Split(netAdd, "/")[0]
 
-	fmt.Println(ipv4Net)
+	//fmt.Println(ipv4Net)
 	// Parse Prefix
 	prefix, err := netip.ParsePrefix(netAdd + "/" + netmask)
 	if err != nil {
@@ -108,9 +149,12 @@ func ParseNetwork(networkInput string) (ipAddress string, netmask string, networ
 	for addr := prefix.Addr(); prefix.Contains(addr); addr = addr.Next() {
 		networkRange = append(networkRange, addr)
 	}
-
+	if len(networkRange) > 2 {
+		networkRange = networkRange[1 : len(networkRange)-1]
+	}
 	//fmt.Println(networkRange)
-	return ipAddress, netmask, networkRange[1 : len(networkRange)-1]
+	//networkRange[1 : len(networkRange)-1]
+	return ipAddress, netmask, networkRange
 }
 
 //Regex Function
@@ -126,11 +170,42 @@ func validateInput(s string) bool {
 //	}
 //}
 
-func Scan() {
-	fmt.Println("testing flow to Scan function")
+func Scan(ipAddress string) {
+	//isAlive(ipAddress)
+
 }
 
-func FormatOutput() {
-	fmt.Println("testing flow to MainHandle function")
+// Function for testing if host is alive
+func isAlive(ipAddress string) bool {
+
+	pinger, err := ping.NewPinger(ipAddress)
+	if err != nil {
+		//fmt.Println("Setup Failed", err)
+
+	}
+	pinger.Count = 1
+	pinger.Timeout = time.Second * 1
+	err = pinger.Run() // Blocks until finished.
+	if err != nil {
+		//fmt.Println("Ping Failed ", err)
+
+	}
+	alive := false
+	stats := pinger.Statistics() // get send/receive/duplicate/rtt stats
+	//fmt.Println((stats))
+	//fmt.Println(stats.PacketsRecv)
+	if stats.PacketsRecv == 1 {
+		alive = true
+		//fmt.Println(alive)
+	} else {
+		alive = false
+		//fmt.Println(alive)
+	}
+
+	return alive
+}
+
+func FormatOutput(sortedAliveAddressesStrings []string) {
+	fmt.Println(sortedAliveAddressesStrings)
 
 }
