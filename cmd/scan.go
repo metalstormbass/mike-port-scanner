@@ -17,6 +17,7 @@ import (
 
 	"github.com/enescakir/emoji"
 	"github.com/go-ping/ping"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
 )
 
@@ -27,8 +28,8 @@ var scanCmd = &cobra.Command{
 	Long:  `Scan an ip range by using: scan --network=192.168.0.0/24`,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("This will work eventually.....%v\n",
-			emoji.ClownFace)
+		fmt.Printf("Running.....%v\n",
+			emoji.ThinkingFace)
 
 		networkInput := args[0]
 
@@ -206,6 +207,11 @@ func isAlive(ipAddress string) bool {
 }
 
 func FormatOutput(sortedAliveAddressesStrings []string) {
-	fmt.Println(sortedAliveAddressesStrings)
-
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"Alive IP Addresses", "Ports"})
+	for x := range sortedAliveAddressesStrings {
+		t.AppendRow([]interface{}{sortedAliveAddressesStrings[x]})
+	}
+	t.Render()
 }
