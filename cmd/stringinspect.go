@@ -56,7 +56,7 @@ var stringinspectCmd = &cobra.Command{
 
 		} else {
 			// If there are no characters - change message
-			fmt.Printf("%[2]v There is %[1]s %[2]v\n", kind, emoji.CrossMark)
+			fmt.Printf("%[2]v There is no %[1]s %[2]v\n", kind, emoji.CrossMark)
 		}
 
 	},
@@ -96,12 +96,7 @@ func Inspect(input string, digits bool) (count int, kind string) {
 
 	// Input is false be default, so this function will always run
 	if !digits {
-		// Added Error Handling
-		if len(input) == 0 {
-			return len(input), "no hedgehog"
-		} else if len(input) >= 1 {
-			return len(input), "hedgehog"
-		}
+		return len(input), "hedgehog"
 	}
 
 	// Is in use when the digit flag is added
@@ -109,12 +104,12 @@ func Inspect(input string, digits bool) (count int, kind string) {
 }
 
 func inspectNumbers(input string) (count int) {
+
 	for _, c := range input {
 		_, err := strconv.Atoi(string(c))
 		if err == nil {
 			count++
 		}
 	}
-
 	return count
 }
